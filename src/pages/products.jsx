@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import Button from "../components/Elements/Button";
 import CardProduct from "../components/Fragments/CardProduct";
 import Counter from "../components/Fragments/Counter";
@@ -6,6 +6,14 @@ import Counter from "../components/Fragments/Counter";
 const products = [
   {
     id: 1,
+    name: "Sepatu Lama",
+    price: 500000,
+    image: "/images/shoes.jpg",
+    description: `Lorem ipsum dolor sit amet consectetur adipisicing elit. Vitae natus
+        ullam necessitatibus`,
+  },
+  {
+    id: 2,
     name: "Sepatu Baru",
     price: 1000000,
     image: "/images/shoes-1.jpg",
@@ -14,25 +22,29 @@ const products = [
         voluptatem distinctio repellendus impedit ad adipisci veniam minima et
         eveniet placeat sunt alias.`,
   },
-  {
-    id: 2,
-    name: "Sepatu Lama",
-    price: 500000,
-    image: "/images/shoes.jpg",
-    description: `Lorem ipsum dolor sit amet consectetur adipisicing elit. Vitae natus
-        ullam necessitatibus`,
-  },
 ];
 
 const email = localStorage.getItem("email");
 
 const ProductsPage = () => {
-  const [cart, setCart] = useState([
-    {
-      id: 1,
-      qty: 1,
-    },
-  ]);
+  const [cart, setCart] = useState([]);
+
+  const [totalPrice, setTotalPrice] = useState(0);
+
+  useEffect (() => {
+    setCart(JSON.parse(localStorage.getItem("cart")) || [] );
+  }, []);
+
+  useEffect (() => {
+    if(cart.length > 0) {
+      const sum = cart.reduce((acc, item) => {
+        const product = products.find((product) => product.id === item.id);
+        return acc + product.price * item.qty;
+      }, 0)
+      setTotalPrice(sum); 
+      localStorage.setItem("cart", JSON.stringify(cart));
+    }
+  }, [cart]);
 
   const handleLogout = () => {
     localStorage.removeItem("email");
@@ -41,13 +53,15 @@ const ProductsPage = () => {
   };
 
   const handleAddToCart = (id) => {
-   if(cart.find(item => item.id === id)) {
-    setCart(
-      cart.map(item => item.id === id ? {...item, qty: item.qty + 1 } : item )
-    )
-   } else {
-    setCart([...cart, { id, qty : 1}]);
-   }
+    if (cart.find((item) => item.id === id)) {
+      setCart(
+        cart.map((item) =>
+          item.id === id ? { ...item, qty: item.qty + 1 } : item
+        )
+      );
+    } else {
+      setCart([...cart, { id, qty: 1 }]);
+    }
   };
 
   return (
@@ -103,22 +117,33 @@ const ProductsPage = () => {
                     <td>{item.qty} </td>
                     <td>
                       Rp{" "}
-                      {item.qty *
-                        product.price.toLocaleString("id-ID", {
-                          styles: "currency",
-                          currency: "IDR",
-                        })}{" "}
+                      {(item.qty * product.price).toLocaleString("id-ID", {
+                        styles: "currency",
+                        currency: "IDR",
+                      })}{" "}
                     </td>
                   </tr>
                 );
               })}
+              <tr>
+                <td colSpan={3}><b>Total Price</b> </td>
+                <td>
+                  <b>
+                  Rp{" "}
+                  {totalPrice.toLocaleString("id-ID", {
+                    styles: "currency",
+                    currency: "IDR",
+                  })}
+                  </b>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
-      <div className="mt-5 flex justify-center">
+      {/* <div className="mt-5 flex justify-center">
         <Counter></Counter>
-      </div>
+      </div> */}
     </Fragment>
   );
 };
